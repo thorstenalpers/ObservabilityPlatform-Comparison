@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../AspireApp/AspireApp.AppHost/TelemetryApp.AppHost.csproj" />
+  <Project Path="../AspireApp/AspireApp.ServiceDefaults/TelemetryApp.ServiceDefaults.csproj" />
+  <Project Path="../WebApplication/TelemetryApp.Api.csproj" />
+  <Project Path="TelemetryApp.Wpf.csproj" />
+</Solution>

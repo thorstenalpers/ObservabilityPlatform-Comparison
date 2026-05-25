@@ -1,0 +1,16 @@
+services:
+  openobserve:
+    image: public.ecr.aws/zinclabs/openobserve:v0.90.2
+    container_name: openobserve
+    ports:
+      - "5080:5080"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      ZO_ROOT_USER_EMAIL: root@example.com
+      ZO_ROOT_USER_PASSWORD: StrongPassword123
+      ZO_DATA_DIR: /data
+      ZO_OTLP_ENABLED: "true"
+    volumes:
+      - ./openobserve-data:/data
+    restart: unless-stopped

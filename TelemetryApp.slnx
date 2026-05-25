@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="TelemetryApp.Api/TelemetryApp.Api.csproj" DefaultStartup="true" />
+  <Project Path="TelemetryApp.Wpf/TelemetryApp.Wpf.csproj" />
+</Solution>
