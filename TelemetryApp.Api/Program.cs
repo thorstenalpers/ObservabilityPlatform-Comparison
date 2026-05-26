@@ -1,9 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using OpenTelemetry.Exporter;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using TelemetryApp.Api.Extensions;
 using TelemetryApp.Api.Model;
 
 namespace TelemetryApp.Api;
@@ -20,63 +16,7 @@ public class Program
             ?? throw new InvalidOperationException("Telemetry configuration missing.");
 
         builder.Logging.ClearProviders();
-        builder.Logging.AddOpenTelemetry(options =>
-        {
-            options.IncludeScopes = true;               // fügt ILogger-Scope-Daten hinzu (z.B. Request- oder Context-IDs aus BeginScope)
-            options.IncludeFormattedMessage = true;     // besser lesbare logs
-            options.AddOtlpExporter(o =>
-            {
-                o.Endpoint = new Uri($"{telemetryOptions.Endpoint}/v1/logs");
-                o.Protocol = OtlpExportProtocol.HttpProtobuf;
-                o.Headers = telemetryOptions.Headers;
-            });
-        });
-
-        //builder.Logging.SetMinimumLevel(LogLevel.Trace);  // steuern der generierten OTEL-logs
-
-        builder.Services.AddOpenTelemetry()
-            .ConfigureResource(resource =>
-            {
-                // Gemeinsame Metadaten für Logs, Traces und Metriken festlegen
-                resource
-                    .AddService(serviceName: "TelemetryApp.Api", serviceVersion: "1.0.0.1")
-                    .AddAttributes([new KeyValuePair<string, object>("environment", "web-server")]);
-            })
-            .WithTracing(tracing =>
-            {
-                tracing
-                    .AddAspNetCoreInstrumentation(options =>  // HTTP-Requests der ASP.NET Core Anwendung automatisch tracen
-                    {
-                        options.RecordException = true;       // Exceptions inkl. Stacktrace im Span speichern (hoher Speicherverbrauch)
-                    })
-                    .AddSqlClientInstrumentation(options =>   // SQL-Datenbankaufrufe automatisch tracen
-                    {
-                        options.RecordException = true;
-                    })
-                    .AddHttpClientInstrumentation(options =>  // Ausgehende HTTP-Aufrufe automatisch tracen
-                    {
-                        options.RecordException = true;
-                    })
-                    .AddOtlpExporter(o =>                     // Traces per OTLP an das Telemetrie-Backend senden
-                    {
-                        o.Endpoint = new Uri($"{telemetryOptions.Endpoint}/v1/traces");
-                        o.Protocol = OtlpExportProtocol.HttpProtobuf;
-                        o.Headers = telemetryOptions.Headers;
-                    });
-            })
-            .WithMetrics(metrics =>
-            {
-                metrics
-                    .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation()
-                    .AddOtlpExporter(o =>
-                    {
-                        o.Endpoint = new Uri($"{telemetryOptions.Endpoint}/v1/metrics");
-                        o.Protocol = OtlpExportProtocol.HttpProtobuf;
-                        o.Headers = telemetryOptions.Headers;
-                    });
-            });
+        builder.Services.AddTelemetry(builder.Configuration, builder.Environment);
 
         builder.Services.AddHealthChecks();
         builder.Services.AddAuthorization();
