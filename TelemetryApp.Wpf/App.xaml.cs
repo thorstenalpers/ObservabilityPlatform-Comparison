@@ -36,10 +36,13 @@ public partial class App : Application
         services.AddLogging(logging =>
         {
             logging.ClearProviders();
+
+            //logging.SetMinimumLevel(LogLevel.Trace);  // steuern der generierten OTEL-logs
+
             logging.AddOpenTelemetry(options =>
             {
-                options.IncludeFormattedMessage = true;
-                options.IncludeScopes = true;
+                options.IncludeScopes = true;               // fügt ILogger-Scope-Daten hinzu (z.B. Request- oder Context-IDs aus BeginScope)
+                options.IncludeFormattedMessage = true;     // besser lesbare logs
 
                 options.AddOtlpExporter(o =>
                 {
@@ -53,35 +56,46 @@ public partial class App : Application
         services.AddOpenTelemetry()
             .ConfigureResource(resource =>
             {
-                resource.AddService(
-                    telemetryOptions.ServiceName,
-                    telemetryOptions.ServiceVersion);
+                // Gemeinsame Metadaten für Logs, Traces und Metriken festlegen
+                resource
+                    .AddService(serviceName: "TelemetryApp.Wpf", serviceVersion: "1.0.0.1")
+                    .AddAttributes([new KeyValuePair<string, object>("environment", "Client-PC")]);
             })
-              .WithTracing(tracing =>
-              {
-                  tracing
-                      .AddAspNetCoreInstrumentation()
-                      .AddHttpClientInstrumentation()
-                      .AddOtlpExporter(o =>
-                      {
-                          o.Endpoint = new Uri($"{telemetryOptions.Endpoint}/v1/traces");
-                          o.Protocol = OtlpExportProtocol.HttpProtobuf;
-                          o.Headers = telemetryOptions.Headers;
-                      });
-              })
-              .WithMetrics(metrics =>
-              {
-                  metrics
-                      .AddAspNetCoreInstrumentation()
-                      .AddHttpClientInstrumentation()
-                      .AddRuntimeInstrumentation()
-                      .AddOtlpExporter(o =>
-                      {
-                          o.Endpoint = new Uri($"{telemetryOptions.Endpoint}/v1/metrics");
-                          o.Protocol = OtlpExportProtocol.HttpProtobuf;
-                          o.Headers = telemetryOptions.Headers;
-                      });
-              });
+            .WithTracing(tracing =>
+            {
+                tracing
+                    .AddAspNetCoreInstrumentation(options =>  // HTTP-Requests der ASP.NET Core Anwendung automatisch tracen
+                    {
+                        options.RecordException = true;       // Exceptions inkl. Stacktrace im Span speichern (hoher Speicherverbrauch)
+                    })
+                    .AddSqlClientInstrumentation(options =>   // SQL-Datenbankaufrufe automatisch tracen
+                    {
+                        options.RecordException = true;
+                    })
+                    .AddHttpClientInstrumentation(options =>  // Ausgehende HTTP-Aufrufe automatisch tracen
+                    {
+                        options.RecordException = true;
+                    })
+                    .AddOtlpExporter(o =>                     // Traces per OTLP an das Telemetrie-Backend senden
+                    {
+                        o.Endpoint = new Uri($"{telemetryOptions.Endpoint}/v1/traces");
+                        o.Protocol = OtlpExportProtocol.HttpProtobuf;
+                        o.Headers = telemetryOptions.Headers;
+                    });
+            })
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddRuntimeInstrumentation()
+                    .AddOtlpExporter(o =>
+                    {
+                        o.Endpoint = new Uri($"{telemetryOptions.Endpoint}/v1/metrics");
+                        o.Protocol = OtlpExportProtocol.HttpProtobuf;
+                        o.Headers = telemetryOptions.Headers;
+                    });
+            });
 
         Services = services.BuildServiceProvider();
         var logger = Services.GetRequiredService<ILogger<App>>();
@@ -96,8 +110,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        var logger =
-            Services.GetRequiredService<ILogger<App>>();
+        var logger = Services.GetRequiredService<ILogger<App>>();
 
         logger.LogInformation("WPF application stopping");
 

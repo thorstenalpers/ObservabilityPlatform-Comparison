@@ -1,0 +1,27 @@
+replicaCount: 1
+
+image:
+  repository: mcr.microsoft.com/mssql/server
+  tag: "2025-latest"
+  pullPolicy: IfNotPresent
+
+mssql:
+  pid: Developer
+  saPassword: "YourStrongPassword123!"
+
+service:
+  type: NodePort
+  port: 1433
+  nodePort: 31433
+
+persistence:
+  enabled: true
+  size: 10Gi
+
+resources:
+  requests:
+    memory: 2Gi
+    cpu: 500m
+  limits:
+    memory: 4Gi
+    cpu: 2

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: sqlserver
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: 1433
+    nodePort: {{ .Values.service.nodePort }}
