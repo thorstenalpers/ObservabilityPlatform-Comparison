@@ -34,6 +34,11 @@ public sealed class TelemetryOptions
     public string ServiceName { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the environment name reported to the telemetry backend.
+    /// </summary>
+    public string EnvironmentName { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets a value indicating whether distributed tracing is enabled.
     /// </summary>
     public bool EnableTracing { get; set; } = true;

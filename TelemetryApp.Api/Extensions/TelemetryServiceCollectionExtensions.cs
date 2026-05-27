@@ -30,7 +30,7 @@ namespace TelemetryApp.Api.Extensions
                         .AddService(serviceName: telemetryOptions.ServiceName, serviceVersion: serviceVersion)
                         .AddAttributes(
                         [
-                            new KeyValuePair<string, object>("deployment.environment", environment.EnvironmentName)
+                            new KeyValuePair<string, object>("deployment.environment", telemetryOptions.EnvironmentName)
                         ]);
                 });
 
