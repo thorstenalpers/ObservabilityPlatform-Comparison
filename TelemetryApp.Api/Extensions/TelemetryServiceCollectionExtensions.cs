@@ -40,7 +40,7 @@ namespace TelemetryApp.Api.Extensions
                 {
                     if (telemetryOptions.EnableAspNetCoreInstrumentation)
                     {
-                        // Exceptions inkl. Stacktrace im Span speichern (hoher Speicherverbrauch)
+                        // Erfasst eingehende ASP.NET Core HTTP-Anfragen als OpenTelemetry-Traces.
                         tracing.AddAspNetCoreInstrumentation(opt =>
                         {
                             // Exceptions inkl. Stacktrace im Span speichern (hoher Speicherverbrauch)
@@ -55,7 +55,7 @@ namespace TelemetryApp.Api.Extensions
 
                     if (telemetryOptions.EnableHttpClientInstrumentation)
                     {
-                        // Ausgehende HTTP-Aufrufe automatisch tracen
+                        // Erfasst ausgehende HTTP-Aufrufe über HttpClient als OpenTelemetry-Traces.
                         tracing.AddHttpClientInstrumentation(opt =>
                         {
                             opt.RecordException = telemetryOptions.RecordExceptions;
@@ -64,7 +64,7 @@ namespace TelemetryApp.Api.Extensions
 
                     if (telemetryOptions.EnableSqlClientInstrumentation)
                     {
-                        // SQL-Datenbankaufrufe automatisch tracen
+                        // Erfasst SQL-Datenbankoperationen als OpenTelemetry-Traces.
                         tracing.AddSqlClientInstrumentation(opt =>
                         {
                             opt.RecordException = telemetryOptions.RecordExceptions;
@@ -110,6 +110,8 @@ namespace TelemetryApp.Api.Extensions
             {
                 services.AddLogging(logging =>
                 {
+                    // Logging:LogLevel:Default steuert die Menge der exportierten Logs.
+                    //logging.SetMinimumLevel(LogLevel.Information);
                     logging.AddOpenTelemetry(options =>
                     {
                         options.IncludeScopes = true;               // fügt ILogger-Scope-Daten hinzu (z.B. Request- oder Context-IDs aus BeginScope)
